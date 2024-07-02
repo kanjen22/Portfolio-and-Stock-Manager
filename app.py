@@ -1,7 +1,7 @@
 import os
 
 from cs50 import SQL
-from flask import Flask, flash, redirect, render_template, request, session
+from flask import Flask, flash, redirect, render_template, request, session, url_for
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -35,7 +35,8 @@ def after_request(response):
 @login_required
 def index():
     """Show portfolio of stocks"""
-    return apology("TODO")
+    return render_template("layout.html")
+    # return apology("TODO")
 
 
 @app.route("/buy", methods=["GET", "POST"])
@@ -71,13 +72,19 @@ def login():
             return apology("must provide password", 403)
 
         # Query database for username
-        rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
+        rows = db.execute(
+            "SELECT * FROM users WHERE username = ?", request.form.get("username")
+        )
 
         # Ensure username exists and password is correct
-        if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
+        ### how does password hashing work? ###
+        if len(rows) != 1 or not check_password_hash(
+            rows[0]["hash"], request.form.get("password")
+        ):
             return apology("invalid username and/or password", 403)
 
         # Remember which user has logged in
+        ### so session data has to be alive for multiple clients?? ###
         session["user_id"] = rows[0]["id"]
 
         # Redirect user to home page
@@ -85,6 +92,9 @@ def login():
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
+        message = request.args.get("message")
+        if message:
+            flash(message)
         return render_template("login.html")
 
 
@@ -109,7 +119,38 @@ def quote():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """Register user"""
-    return apology("TODO")
+    if request.method == "POST":
+        rows = db.execute("SELECT username FROM users")
+        # Extract usernames into a list
+        usernames = [row["username"] for row in rows]
+        # Ensure username was submitted and not already taken
+        if not request.form.get("username"):
+            flash("must provide username")
+            return redirect("/register")
+        elif request.form.get("username") in usernames:
+            flash("username already exists")
+            return redirect("/register")
+        # Ensure password and confirmation were submitted
+        elif not request.form.get("password") or not request.form.get("confirmation"):
+            flash("must provide both password and confirmation")
+            return redirect("/register")
+        elif request.form.get("password") != request.form.get("confirmation"):
+            flash("passwords do not match")
+            return redirect("/register")
+        # Insert new username and password
+        pwd_hash = generate_password_hash(request.form.get("password"))
+        db.execute(
+            "INSERT INTO users (username, hash) VALUES (?, ?)",
+            request.form.get("username"),
+            pwd_hash,
+        )
+
+        # Redirect user to home page
+        return redirect(url_for("login", message="registration successful"))
+
+    # User reached route via GET (as by clicking a link or via redirect)
+    else:
+        return render_template("register.html")
 
 
 @app.route("/sell", methods=["GET", "POST"])
