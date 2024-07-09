@@ -21,3 +21,26 @@ nav .navbar-brand .green
 {
     color: #2e944b;
 }
+
+/* table styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 10px;
+    text-align: left;
+}
+th {
+    background-color: white;
+    font-weight: bold;
+}
+tr:nth-child(odd) {
+    background-color: lightgrey;
+}
+tr:nth-child(even) {
+    background-color: white;
+}
+.bold {
+    font-weight: bold;
+}
