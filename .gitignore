@@ -9,3 +9,6 @@ __pycache__
 .vscode
 .idea/
 *.sublime-*
+
+# Ignore flas_session
+flask_session
